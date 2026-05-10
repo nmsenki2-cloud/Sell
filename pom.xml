@@ -1,0 +1,117 @@
+package hu.sellplugin.listeners;
+
+import hu.sellplugin.SellPlugin;
+import hu.sellplugin.managers.PriceManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Material;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class InventoryHoverListener implements Listener {
+
+    private final SellPlugin plugin;
+    private final PriceManager priceManager;
+    private final NamespacedKey PRICE_LORE_KEY;
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
+
+    public InventoryHoverListener(SellPlugin plugin) {
+        this.plugin = plugin;
+        this.priceManager = plugin.getPriceManager();
+        this.PRICE_LORE_KEY = new NamespacedKey(plugin, "price_lore");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (!plugin.getConfig().getBoolean("show-price-in-lore", true)) return;
+        if (!(event.getPlayer() instanceof Player player)) return;
+
+        // Frissítjük a player saját inventory-ját
+        for (ItemStack item : player.getInventory().getContents()) {
+            updateItemLore(item);
+        }
+    }
+
+    @EventHandler
+    public void onItemHeld(PlayerItemHeldEvent event) {
+        if (!plugin.getConfig().getBoolean("show-price-in-lore", true)) return;
+
+        Player player = event.getPlayer();
+        ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
+        updateItemLore(newItem);
+    }
+
+    private void updateItemLore(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) return;
+        if (!item.hasItemMeta()) {
+            if (!priceManager.hasPrice(item.getType())) return;
+        }
+
+        Material mat = item.getType();
+        if (!priceManager.hasPrice(mat)) return;
+
+        double price = priceManager.getPrice(mat);
+        double stackPrice = priceManager.getStackPrice(mat);
+        String currency = priceManager.getCurrencySymbol();
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+
+        // Ellenőrzés: már van-e lore beállítva ugyanezzel az árral
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        double existingPrice = pdc.getOrDefault(PRICE_LORE_KEY, PersistentDataType.DOUBLE, -1.0);
+        if (existingPrice == price) return; // Nem kell frissíteni
+
+        // Meglévő lore megőrzése (eltávolítjuk az előző ársorokat)
+        List<Component> currentLore = meta.lore() != null ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+        currentLore.removeIf(line -> {
+            String plain = miniMessage.stripTags(line.toString());
+            return plain.contains("Eladási ár:") || plain.contains("Stack") || plain.contains("🪙");
+        });
+
+        // Elválasztó sor
+        currentLore.add(Component.empty());
+
+        // Ár lore hozzáadás
+        String loreLine = plugin.getConfig().getString("lore-format",
+            "&7Eladási ár: &e{price} {currency} &7/ db");
+        String stackLine = plugin.getConfig().getString("lore-stack-format",
+            "&7Stack (64x): &6{stack_price} {currency}");
+
+        loreLine = loreLine
+            .replace("{price}", formatMoney(price))
+            .replace("{stack_price}", formatMoney(stackPrice))
+            .replace("{currency}", currency)
+            .replace("&", "§");
+
+        stackLine = stackLine
+            .replace("{price}", formatMoney(price))
+            .replace("{stack_price}", formatMoney(stackPrice))
+            .replace("{currency}", currency)
+            .replace("&", "§");
+
+        currentLore.add(Component.text(loreLine));
+        currentLore.add(Component.text(stackLine));
+
+        meta.lore(currentLore);
+        pdc.set(PRICE_LORE_KEY, PersistentDataType.DOUBLE, price);
+        item.setItemMeta(meta);
+    }
+
+    private String formatMoney(double amount) {
+        if (amount == (long) amount) return String.valueOf((long) amount);
+        return String.format("%.2f", amount);
+    }
+}

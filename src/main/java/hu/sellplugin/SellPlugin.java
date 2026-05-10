@@ -1,0 +1,43 @@
+package hu.sellplugin;
+
+import hu.sellplugin.commands.SellAdminCommand;
+import hu.sellplugin.commands.SellCommand;
+import hu.sellplugin.commands.SellPriceCommand;
+import hu.sellplugin.listeners.InventoryHoverListener;
+import hu.sellplugin.managers.PriceManager;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class SellPlugin extends JavaPlugin {
+
+    private static SellPlugin instance;
+    private PriceManager priceManager;
+
+    @Override
+    public void onEnable() {
+        instance = this;
+        saveDefaultConfig();
+
+        priceManager = new PriceManager(this);
+
+        getCommand("sell").setExecutor(new SellCommand(this));
+        getCommand("sellprice").setExecutor(new SellPriceCommand(this));
+        getCommand("selladmin").setExecutor(new SellAdminCommand(this));
+
+        getServer().getPluginManager().registerEvents(new InventoryHoverListener(this), this);
+
+        getLogger().info("SellPlugin betöltve! " + priceManager.getPriceCount() + " item árral.");
+    }
+
+    @Override
+    public void onDisable() {
+        getLogger().info("SellPlugin leállítva.");
+    }
+
+    public static SellPlugin getInstance() {
+        return instance;
+    }
+
+    public PriceManager getPriceManager() {
+        return priceManager;
+    }
+}

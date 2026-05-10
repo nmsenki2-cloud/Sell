@@ -6,7 +6,7 @@ currency-symbol: "🪙"
 currency-name: "Arany"
  
 # Lore kikapcsolva - nem írja rá az itemre az árat
-show-price-in-lore: false
+show-price-in-lore: true
  
 lore-format: "&7Eladási ár: &e{price} {currency} &7/ db"
 lore-stack-format: "&7Stack (64x): &6{stack_price} {currency}"

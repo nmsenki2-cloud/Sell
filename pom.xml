@@ -1,117 +1,77 @@
-package hu.sellplugin.listeners;
+package hu.sellplugin.managers;
 
 import hu.sellplugin.SellPlugin;
-import hu.sellplugin.managers.PriceManager;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Player;
+import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class InventoryHoverListener implements Listener {
+public class PriceManager {
 
     private final SellPlugin plugin;
-    private final PriceManager priceManager;
-    private final NamespacedKey PRICE_LORE_KEY;
-    private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final Map<Material, Double> prices = new HashMap<>();
 
-    public InventoryHoverListener(SellPlugin plugin) {
+    public PriceManager(SellPlugin plugin) {
         this.plugin = plugin;
-        this.priceManager = plugin.getPriceManager();
-        this.PRICE_LORE_KEY = new NamespacedKey(plugin, "price_lore");
+        loadPrices();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onInventoryOpen(InventoryOpenEvent event) {
-        if (!plugin.getConfig().getBoolean("show-price-in-lore", true)) return;
-        if (!(event.getPlayer() instanceof Player player)) return;
+    public void loadPrices() {
+        prices.clear();
+        FileConfiguration config = plugin.getConfig();
 
-        // Frissítjük a player saját inventory-ját
-        for (ItemStack item : player.getInventory().getContents()) {
-            updateItemLore(item);
-        }
-    }
-
-    @EventHandler
-    public void onItemHeld(PlayerItemHeldEvent event) {
-        if (!plugin.getConfig().getBoolean("show-price-in-lore", true)) return;
-
-        Player player = event.getPlayer();
-        ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
-        updateItemLore(newItem);
-    }
-
-    private void updateItemLore(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) return;
-        if (!item.hasItemMeta()) {
-            if (!priceManager.hasPrice(item.getType())) return;
+        if (!config.isConfigurationSection("prices")) {
+            plugin.getLogger().warning("Nincs 'prices' szekció a config.yml-ben!");
+            return;
         }
 
-        Material mat = item.getType();
-        if (!priceManager.hasPrice(mat)) return;
+        Set<String> keys = config.getConfigurationSection("prices").getKeys(false);
+        for (String key : keys) {
+            try {
+                Material material = Material.valueOf(key.toUpperCase());
+                double price = config.getDouble("prices." + key);
+                prices.put(material, price);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Ismeretlen material a config-ban: " + key);
+            }
+        }
 
-        double price = priceManager.getPrice(mat);
-        double stackPrice = priceManager.getStackPrice(mat);
-        String currency = priceManager.getCurrencySymbol();
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return;
-
-        // Ellenőrzés: már van-e lore beállítva ugyanezzel az árral
-        PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        double existingPrice = pdc.getOrDefault(PRICE_LORE_KEY, PersistentDataType.DOUBLE, -1.0);
-        if (existingPrice == price) return; // Nem kell frissíteni
-
-        // Meglévő lore megőrzése (eltávolítjuk az előző ársorokat)
-        List<Component> currentLore = meta.lore() != null ? new ArrayList<>(meta.lore()) : new ArrayList<>();
-        currentLore.removeIf(line -> {
-            String plain = miniMessage.stripTags(line.toString());
-            return plain.contains("Eladási ár:") || plain.contains("Stack") || plain.contains("🪙");
-        });
-
-        // Elválasztó sor
-        currentLore.add(Component.empty());
-
-        // Ár lore hozzáadás
-        String loreLine = plugin.getConfig().getString("lore-format",
-            "&7Eladási ár: &e{price} {currency} &7/ db");
-        String stackLine = plugin.getConfig().getString("lore-stack-format",
-            "&7Stack (64x): &6{stack_price} {currency}");
-
-        loreLine = loreLine
-            .replace("{price}", formatMoney(price))
-            .replace("{stack_price}", formatMoney(stackPrice))
-            .replace("{currency}", currency)
-            .replace("&", "§");
-
-        stackLine = stackLine
-            .replace("{price}", formatMoney(price))
-            .replace("{stack_price}", formatMoney(stackPrice))
-            .replace("{currency}", currency)
-            .replace("&", "§");
-
-        currentLore.add(Component.text(loreLine));
-        currentLore.add(Component.text(stackLine));
-
-        meta.lore(currentLore);
-        pdc.set(PRICE_LORE_KEY, PersistentDataType.DOUBLE, price);
-        item.setItemMeta(meta);
+        plugin.getLogger().info("Betöltve " + prices.size() + " item ár.");
     }
 
-    private String formatMoney(double amount) {
-        if (amount == (long) amount) return String.valueOf((long) amount);
-        return String.format("%.2f", amount);
+    public boolean hasPrice(Material material) {
+        return prices.containsKey(material);
+    }
+
+    public double getPrice(Material material) {
+        return prices.getOrDefault(material, 0.0);
+    }
+
+    public double getStackPrice(Material material) {
+        return getPrice(material) * 64;
+    }
+
+    public void setPrice(Material material, double price) {
+        prices.put(material, price);
+        plugin.getConfig().set("prices." + material.name(), price);
+        plugin.saveConfig();
+    }
+
+    public Map<Material, Double> getAllPrices() {
+        return new HashMap<>(prices);
+    }
+
+    public int getPriceCount() {
+        return prices.size();
+    }
+
+    public String getCurrencySymbol() {
+        return plugin.getConfig().getString("currency-symbol", "🪙");
+    }
+
+    public String getCurrencyName() {
+        return plugin.getConfig().getString("currency-name", "Arany");
     }
 }

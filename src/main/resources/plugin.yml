@@ -1,0 +1,31 @@
+name: SellPlugin
+version: '${project.version}'
+main: hu.sellplugin.SellPlugin
+api-version: '1.20'
+description: Eladási rendszer hover tooltipekkel
+authors: [Te]
+
+commands:
+  sell:
+    description: Eladja a kézben tartott itemet
+    usage: /sell [mennyiség|all]
+    aliases: [elad]
+  sellprice:
+    description: Megmutatja az item árát
+    usage: /sellprice
+    aliases: [ar, price]
+  selladmin:
+    description: Admin parancsok az árak kezeléséhez
+    usage: /selladmin <set|reload|list> [item] [ár]
+    permission: sellplugin.admin
+
+permissions:
+  sellplugin.sell:
+    description: Eladási jog
+    default: true
+  sellplugin.sellprice:
+    description: Ár lekérési jog
+    default: true
+  sellplugin.admin:
+    description: Admin jog
+    default: op

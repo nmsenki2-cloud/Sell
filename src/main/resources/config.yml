@@ -1,0 +1,110 @@
+# ==============================
+#   SellPlugin - Konfiguráció
+# ==============================
+
+currency-symbol: "🪙"
+currency-name: "Arany"
+
+show-price-in-lore: true
+lore-format: "&7Eladási ár: &e{price} {currency} &7/ db"
+lore-stack-format: "&7Stack (64x): &6{stack_price} {currency}"
+
+sell-message: "&aEladtad: &f{amount}x {item} &aért &e{total} {currency}&a!"
+no-price-message: "&cEnnek az itemnek nincs eladási ára."
+no-permission-message: "&cNincs jogosultságod ehhez!"
+
+prices:
+  BAMBOO: 2
+  KELP: 1
+  DRIED_KELP: 3
+  SUGAR_CANE: 2
+  WHEAT: 3
+  WHEAT_SEEDS: 1
+  CARROT: 4
+  POTATO: 3
+  BEETROOT: 3
+  BEETROOT_SEEDS: 1
+  PUMPKIN: 8
+  MELON: 2
+  MELON_SLICE: 1
+  COCOA_BEANS: 5
+  NETHER_WART: 4
+  CHORUS_FRUIT: 6
+  OAK_LOG: 4
+  SPRUCE_LOG: 4
+  BIRCH_LOG: 4
+  JUNGLE_LOG: 4
+  ACACIA_LOG: 4
+  DARK_OAK_LOG: 4
+  MANGROVE_LOG: 5
+  CHERRY_LOG: 6
+  CRIMSON_STEM: 5
+  WARPED_STEM: 5
+  OAK_SAPLING: 2
+  SPRUCE_SAPLING: 2
+  BIRCH_SAPLING: 2
+  COBBLESTONE: 1
+  STONE: 2
+  GRAVEL: 1
+  SAND: 1
+  RED_SAND: 2
+  DIRT: 1
+  FLINT: 3
+  CLAY_BALL: 2
+  CLAY: 5
+  COAL: 5
+  CHARCOAL: 4
+  IRON_INGOT: 15
+  GOLD_INGOT: 20
+  DIAMOND: 100
+  EMERALD: 80
+  NETHERITE_SCRAP: 150
+  NETHERITE_INGOT: 650
+  COPPER_INGOT: 8
+  AMETHYST_SHARD: 12
+  QUARTZ: 6
+  GLOWSTONE_DUST: 8
+  REDSTONE: 5
+  LAPIS_LAZULI: 10
+  EGG: 1
+  FEATHER: 3
+  LEATHER: 10
+  RAW_BEEF: 4
+  COOKED_BEEF: 8
+  RAW_PORKCHOP: 4
+  COOKED_PORKCHOP: 8
+  RAW_CHICKEN: 3
+  COOKED_CHICKEN: 6
+  RAW_MUTTON: 3
+  COOKED_MUTTON: 6
+  RAW_RABBIT: 4
+  COOKED_RABBIT: 8
+  RAW_COD: 3
+  COOKED_COD: 6
+  RAW_SALMON: 4
+  COOKED_SALMON: 8
+  BONE: 5
+  STRING: 4
+  SPIDER_EYE: 8
+  GUNPOWDER: 10
+  SLIME_BALL: 12
+  BLAZE_ROD: 25
+  GHAST_TEAR: 50
+  MAGMA_CREAM: 15
+  ENDER_PEARL: 20
+  ENDER_EYE: 40
+  WOOL: 6
+  INK_SAC: 5
+  GLOW_INK_SAC: 15
+  RABBIT_HIDE: 5
+  RABBIT_FOOT: 30
+  TURTLE_EGG: 20
+  HONEY_BOTTLE: 10
+  HONEYCOMB: 8
+  GLASS: 2
+  PAPER: 3
+  BOOK: 8
+  BREAD: 6
+  DANDELION: 1
+  POPPY: 1
+  SUNFLOWER: 4
